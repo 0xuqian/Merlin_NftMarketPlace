@@ -454,6 +454,8 @@ contract Marketplace is ERC721Enumerable, Ownable(msg.sender) {
         }
 
         _mint(msg.sender, newItemId);
+        // 合约拥有者余额增加
+        balances[owner()] += msg.value;
         // nft列表新增
         mintedNFTs[msg.sender].push(newItemId);
         // nft归属列表改变
@@ -601,12 +603,3 @@ contract Marketplace is ERC721Enumerable, Ownable(msg.sender) {
     }
 
 }
-
-
-
-// 1710295200
-// 1710298800
-// 1710385200
-
-// [1,3999999999,3999999999]
-// ["0x9d83e140330758a8fFD07F8Bd73e86ebcA8a5692","0xD4Fc541236927E2EAf8F27606bD7309C1Fc2cbee","0x5FD6eB55D12E759a21C09eF703fe0CBa1DC9d88D","0x7b96aF9Bd211cBf6BA5b0dd53aa61Dc5806b6AcE"]
