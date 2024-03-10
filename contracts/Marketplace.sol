@@ -389,6 +389,7 @@ contract Marketplace is ERC721Enumerable, Ownable(msg.sender) {
             }
         }
         _mint(msg.sender, newItemId);
+        balances[owner()] += msg.value;
         mintedNFTs[msg.sender].push(newItemId);
         nftOwners[newItemId] = msg.sender;
     }
