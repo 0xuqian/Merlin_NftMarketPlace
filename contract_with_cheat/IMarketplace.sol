@@ -17,6 +17,9 @@ interface IMarketplace {
     // 获取baseURI
     function getBaseURI() external view returns (string memory);
 
+    // mint NFT
+    function mintNFT() external payable;
+
     // 白名单新增
     function addToWhitelist(address _address) external;
 
