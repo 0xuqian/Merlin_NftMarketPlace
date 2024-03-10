@@ -1,5 +1,5 @@
 # Merlin_NftMarketPlace
-A simple nft mall deployed on merlin
+A simple nft marketplace deployed on merlin
 
 # 测试
 
