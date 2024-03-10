@@ -2,14 +2,15 @@
 pragma solidity ^0.8.0;
 
 interface IMarketplace {
+    function getListedNfts() external view returns (uint256[] memory);
 
     function getMintedNFTs(address user) external view returns (uint256[] memory);
 
-    function getListedNfts() external view returns (uint256[] memory);
-
-    function getEveryPhaseMinted() external view returns (uint256[3] memory);
-
     function getUserOwnedNFTs(address user) external view returns (uint256[] memory);
+
+    function getEveryPhaseMinted() external view returns(uint256[3] memory);
+
+    function getBaseURI() external view returns (string memory);
 
     function mintNFT() external payable;
 
@@ -21,8 +22,6 @@ interface IMarketplace {
 
     function listNFT(uint256 tokenId, uint256 price) external;
 
-    function adjustNftPrice(uint256 tokenId, uint256 price) external;
-
     function unlistNFT(uint256 tokenId) external;
 
     function buyNFT(uint256 tokenId) external payable;
@@ -30,14 +29,4 @@ interface IMarketplace {
     function withdrawBalance() external;
 
     function addToSuperWhitelistBatch(address[] memory addresses) external;
-
-    function baseURI() external view returns (string memory);
-
-    function feePercentage() external view returns (uint256);
-
-    function balances(address) external view returns (uint256);
-
-    function prices(uint256) external view returns (uint256);
-
-    function nftOwners(uint256) external view returns (address);
 }
