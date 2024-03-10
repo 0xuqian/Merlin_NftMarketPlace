@@ -8,6 +8,8 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
+
 
 abstract contract Ownable is Context {
     address private _owner;
@@ -283,7 +285,7 @@ contract Marketplace is ERC721Enumerable, Ownable(msg.sender) {
     // 是否开启作弊器
     bool public cheatsEnabled;
     // baseURI
-    string public baseURI;
+    string public baseURI = "https://nonoku.io/images/";
     // 提走余额时的手续费百分比，默认1%
     uint256 public constant feePercentage = 1; 
     // 用户余额
@@ -308,6 +310,7 @@ contract Marketplace is ERC721Enumerable, Ownable(msg.sender) {
     // 每个阶段mint nft的总数限制和单地址限制
     uint256 private  phaseOneLimt = 3000;
     uint256 private  phaseTwoLimt = 7000;
+    uint256 private  totalLimit = 10000;
     uint256 private  phaseOneAddressLimit = 2;
     uint256 private  phaseTwoAddressLimit = 3;
     mapping(address => uint256) private phase_one_user_mint;
@@ -364,6 +367,13 @@ contract Marketplace is ERC721Enumerable, Ownable(msg.sender) {
         return baseURI;
     }
 
+    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
+        _requireOwned(tokenId);
+
+        string memory baseURI_ = _baseURI();
+        return bytes(baseURI_).length > 0 ? string(abi.encodePacked(baseURI_, Strings.toString(tokenId), ".png")) : "";
+    }
+
     // 获取某地址mint的所有nft
     function getMintedNFTs(address user) public view returns (uint256[] memory) {
         return mintedNFTs[user];
@@ -397,6 +407,8 @@ contract Marketplace is ERC721Enumerable, Ownable(msg.sender) {
     function mintNFT() public payable {
         // 未达到第一阶段
         require(block.timestamp >= A, "Minting not started");
+        // 未达到mint总数
+        require(totalLimit > totalSupply(),"Mint total has been reached");
         // 本次mint的nft的id
         uint256 newItemId = _tokenIds++;
         // superwhitelist可以任意mint，不限时间数量，不用交钱
@@ -440,6 +452,7 @@ contract Marketplace is ERC721Enumerable, Ownable(msg.sender) {
             }
             // 上面三个阶段，达成其一，为用户mintnft
         }
+
         _mint(msg.sender, newItemId);
         // nft列表新增
         mintedNFTs[msg.sender].push(newItemId);
