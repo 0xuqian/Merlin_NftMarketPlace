@@ -10,7 +10,7 @@ interface IMarketplace {
 
     function getEveryPhaseMinted() external view returns(uint256[3] memory);
 
-    function getBaseURI() external view returns (string memory);
+    function tokenURI(uint256 tokenId) external view returns (string memory);
 
     function mintNFT() external payable;
 
