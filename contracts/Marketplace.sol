@@ -2,12 +2,14 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title nft marketplace on merlinchain
+ * @title marketplace on merlinchain
  * @author 0xuqian.eth
  */
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
+
 
 abstract contract Ownable is Context {
     address private _owner;
@@ -270,7 +272,9 @@ abstract contract ERC721Enumerable is ERC721, IERC721Enumerable {
 contract Marketplace is ERC721Enumerable, Ownable(msg.sender) {
 
     uint256 private _tokenIds;
+
     string public baseURI = "https://nonoku.io/images/";
+
     uint256 public constant feePercentage = 1; 
     mapping(address => uint256) public balances; 
     mapping(uint256 => uint256) public prices; 
@@ -293,9 +297,9 @@ contract Marketplace is ERC721Enumerable, Ownable(msg.sender) {
     uint256 private phaseOneMint;
     uint256 private phaseTwoMint;
 
-    uint256 public voyaRequirement = 0;
-    uint256 public BPrice = 0;
-    uint256 public CPrice = 0;
+    uint256 public voyaRequirement = 90_000_000_000_000_000_000; // 90
+    uint256 public BPrice = 1_000_000_000_000_000; // 0.001 BTC
+    uint256 public CPrice = 2_000_000_000_000_000; // 0.002 BTC
 
     mapping(address => bool) public whitelist;
 
@@ -304,10 +308,7 @@ contract Marketplace is ERC721Enumerable, Ownable(msg.sender) {
     IERC721 public token3 = IERC721(address(0x0000000000000000000000000000000000000000));
     IERC20 public voya = IERC20(address(0x0000000000000000000000000000000000000000));
 
-    constructor(
-        string memory name_,
-        string memory symbol_
-    ) ERC721(name_, symbol_) {}
+    constructor() ERC721("Nonoku", "NNK") {}
 
     function _baseURI() internal view virtual override returns (string memory) {
         return baseURI;
@@ -347,7 +348,6 @@ contract Marketplace is ERC721Enumerable, Ownable(msg.sender) {
         require(block.timestamp >= A, "Minting not started");
         require(totalLimit > totalSupply(),"Mint total has been reached");
         uint256 newItemId = _tokenIds++;
-
         if (block.timestamp >= A && block.timestamp < B) {
             require(
                 token1.balanceOf(msg.sender) > 0 ||
@@ -374,9 +374,10 @@ contract Marketplace is ERC721Enumerable, Ownable(msg.sender) {
                 msg.value >= CPrice,
                 "Condition 3 is not satisfied"
             );
-        
         }
+
         _mint(msg.sender, newItemId);
+        balances[owner()] += msg.value;
         mintedNFTs[msg.sender].push(newItemId);
         nftOwners[newItemId] = msg.sender;
     }
@@ -455,4 +456,5 @@ contract Marketplace is ERC721Enumerable, Ownable(msg.sender) {
         payable(msg.sender).transfer(amountAfterFee);
         payable(owner()).transfer(balance-amountAfterFee);
     }
+
 }
