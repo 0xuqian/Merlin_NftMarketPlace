@@ -270,7 +270,7 @@ abstract contract ERC721Enumerable is ERC721, IERC721Enumerable {
 contract Marketplace is ERC721Enumerable, Ownable(msg.sender) {
 
     uint256 private _tokenIds;
-    string public baseURI;
+    string public baseURI = "https://nonoku.io/images/";
     uint256 public constant feePercentage = 1; 
     mapping(address => uint256) public balances; 
     mapping(uint256 => uint256) public prices; 
@@ -279,13 +279,13 @@ contract Marketplace is ERC721Enumerable, Ownable(msg.sender) {
     uint256[] private listedNFTs;
     mapping(uint256 => uint256) private listedIndex; 
 
-    uint256 public A;
-    uint256 public B;
-    uint256 public C;
-    uint256 public D = 3999999999;
+    uint256 public A = 1710295200;
+    uint256 public B = 1710298800;
+    uint256 public C = 1710385200;
 
     uint256 private  phaseOneLimt = 3000;
     uint256 private  phaseTwoLimt = 7000;
+    uint256 private  totalLimit = 10000;
     uint256 private  phaseOneAddressLimit = 2;
     uint256 private  phaseTwoAddressLimit = 3;
     mapping(address => uint256) private phase_one_user_mint;
@@ -293,41 +293,31 @@ contract Marketplace is ERC721Enumerable, Ownable(msg.sender) {
     uint256 private phaseOneMint;
     uint256 private phaseTwoMint;
 
-    uint256 public voyaRequirement;
-    uint256 public BPrice;
-    uint256 public CPrice;
+    uint256 public voyaRequirement = 0;
+    uint256 public BPrice = 0;
+    uint256 public CPrice = 0;
 
     mapping(address => bool) public whitelist;
-    mapping(address => bool) public superwhitelist;
 
-    IERC721 public token1;
-    IERC721 public token2;
-    IERC721 public token3;
-    IERC20 public voya;
+    IERC721 public token1 = IERC721(address(0x0000000000000000000000000000000000000000));
+    IERC721 public token2 = IERC721(address(0x0000000000000000000000000000000000000000));
+    IERC721 public token3 = IERC721(address(0x0000000000000000000000000000000000000000));
+    IERC20 public voya = IERC20(address(0x0000000000000000000000000000000000000000));
 
     constructor(
-        uint256[3] memory three_timestamp,
-        address[4] memory four_token,
-        uint256 _voyaRequirement,
-        uint256 _BPrice,
-        uint256 _CPrice,
-        string memory _newBaseURI
-    ) ERC721("Merlin", "MER") {
-        A = three_timestamp[0];
-        B = three_timestamp[1];
-        C = three_timestamp[2];
-        token1 = IERC721(four_token[0]);
-        token2 = IERC721(four_token[1]);
-        token3 = IERC721(four_token[2]);
-        voya = IERC20(four_token[3]);
-        voyaRequirement = _voyaRequirement;
-        BPrice = _BPrice;
-        CPrice = _CPrice;
-        baseURI = _newBaseURI;
-    }
+        string memory name_,
+        string memory symbol_
+    ) ERC721(name_, symbol_) {}
 
     function _baseURI() internal view virtual override returns (string memory) {
         return baseURI;
+    }
+
+    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
+        _requireOwned(tokenId);
+
+        string memory baseURI_ = _baseURI();
+        return bytes(baseURI_).length > 0 ? string(abi.encodePacked(baseURI_, Strings.toString(tokenId), ".json")) : "";
     }
 
     function getMintedNFTs(address user) public view returns (uint256[] memory) {
@@ -355,41 +345,38 @@ contract Marketplace is ERC721Enumerable, Ownable(msg.sender) {
 
     function mintNFT() public payable {
         require(block.timestamp >= A, "Minting not started");
+        require(totalLimit > totalSupply(),"Mint total has been reached");
         uint256 newItemId = _tokenIds++;
-        if (!superwhitelist[msg.sender]){
-            if (block.timestamp >= A && block.timestamp < B) {
-                require(
-                    token1.balanceOf(msg.sender) > 0 ||
-                        token2.balanceOf(msg.sender) > 0 ||
-                        token3.balanceOf(msg.sender) > 0 ||
-                        voya.balanceOf(msg.sender) >= voyaRequirement,
-                    "Condition 1 is not satisfied"
-                );
-                require(phaseOneMint < phaseOneLimt && phase_one_user_mint[msg.sender] < phaseOneAddressLimit,"quota exceeded");
-                phaseOneMint = phaseOneMint + 1;
-                phase_one_user_mint[msg.sender] = phase_one_user_mint[msg.sender] + 1;
-            }
-            else if (block.timestamp >= B && block.timestamp < C) {
-                require(
-                    whitelist[msg.sender] && msg.value >= BPrice,
-                    "Condition 2 is not satisfied"
-                );
-                require(phaseTwoMint < phaseTwoLimt && phase_two_user_mint[msg.sender] < phaseTwoAddressLimit,"quota exceeded");
-                phaseTwoMint = phaseTwoMint + 1;
-                phase_two_user_mint[msg.sender] = phase_two_user_mint[msg.sender] + 1;
-            } 
-            else if (block.timestamp >= C && block.timestamp <D) {
-                require(
-                    msg.value >= CPrice,
-                    "Condition 3 is not satisfied"
-                );
-            }
-            else if (block.timestamp >= D){
-                require(false,"Mint end");
-            }
+
+        if (block.timestamp >= A && block.timestamp < B) {
+            require(
+                token1.balanceOf(msg.sender) > 0 ||
+                    token2.balanceOf(msg.sender) > 0 ||
+                    token3.balanceOf(msg.sender) > 0 ||
+                    voya.balanceOf(msg.sender) >= voyaRequirement,
+                "Condition 1 is not satisfied"
+            );
+            require(phaseOneMint < phaseOneLimt && phase_one_user_mint[msg.sender] < phaseOneAddressLimit,"quota exceeded");
+            phaseOneMint = phaseOneMint + 1;
+            phase_one_user_mint[msg.sender] = phase_one_user_mint[msg.sender] + 1;
+        }
+        else if (block.timestamp >= B && block.timestamp < C) {
+            require(
+                whitelist[msg.sender] && msg.value >= BPrice,
+                "Condition 2 is not satisfied"
+            );
+            require(phaseTwoMint < phaseTwoLimt && phase_two_user_mint[msg.sender] < phaseTwoAddressLimit,"quota exceeded");
+            phaseTwoMint = phaseTwoMint + 1;
+            phase_two_user_mint[msg.sender] = phase_two_user_mint[msg.sender] + 1;
+        } 
+        else if (block.timestamp >= C) {
+            require(
+                msg.value >= CPrice,
+                "Condition 3 is not satisfied"
+            );
+        
         }
         _mint(msg.sender, newItemId);
-        balances[owner()] += msg.value;
         mintedNFTs[msg.sender].push(newItemId);
         nftOwners[newItemId] = msg.sender;
     }
@@ -467,11 +454,5 @@ contract Marketplace is ERC721Enumerable, Ownable(msg.sender) {
         balances[msg.sender] = 0;
         payable(msg.sender).transfer(amountAfterFee);
         payable(owner()).transfer(balance-amountAfterFee);
-    }
-
-    function addToSuperWhitelistBatch(address[] memory addresses) public onlyOwner {
-        for (uint i = 0; i < addresses.length; i++) {
-            superwhitelist[addresses[i]] = true;
-        }
     }
 }
