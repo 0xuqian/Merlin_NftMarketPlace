@@ -371,7 +371,7 @@ contract Marketplace is ERC721Enumerable, Ownable(msg.sender) {
         _requireOwned(tokenId);
 
         string memory baseURI_ = _baseURI();
-        return bytes(baseURI_).length > 0 ? string(abi.encodePacked(baseURI_, Strings.toString(tokenId), ".png")) : "";
+        return bytes(baseURI_).length > 0 ? string(abi.encodePacked(baseURI_, Strings.toString(tokenId), ".json")) : "";
     }
 
     // 获取某地址mint的所有nft
