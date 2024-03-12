@@ -269,13 +269,13 @@ abstract contract ERC721Enumerable is ERC721, IERC721Enumerable {
     }
 }
 
-contract Marketplace is ERC721Enumerable, Ownable(msg.sender) {
+contract NNK is ERC721Enumerable, Ownable(msg.sender) {
 
     uint256 private _tokenIds;
 
     string public baseURI = "https://nonoku.io/images/";
 
-    uint256 public constant feePercentage = 1; 
+    uint256 public constant feePercentage = 3; 
     mapping(address => uint256) public balances; 
     mapping(uint256 => uint256) public prices; 
     mapping(uint256 => address) public nftOwners;
@@ -283,30 +283,28 @@ contract Marketplace is ERC721Enumerable, Ownable(msg.sender) {
     uint256[] private listedNFTs;
     mapping(uint256 => uint256) private listedIndex; 
 
-    uint256 public A = 1710295200;
-    uint256 public B = 1710298800;
-    uint256 public C = 1710385200;
+    uint256 public A = 1710327600; // UTC 2024-3-13 11:00 1710327600
+    uint256 public B = 1710327600 + 1 hours; // UTC 2024-3-13 12:00 1710331200
+    uint256 public C = 1710327600 + 3 hours; // UTC 2024-3-13 14:00 1710338400
 
     uint256 private  phaseOneLimt = 3000;
     uint256 private  phaseTwoLimt = 7000;
     uint256 private  totalLimit = 10000;
     uint256 private  phaseOneAddressLimit = 2;
     uint256 private  phaseTwoAddressLimit = 3;
-    mapping(address => uint256) private phase_one_user_mint;
-    mapping(address => uint256) private phase_two_user_mint;
-    uint256 private phaseOneMint;
-    uint256 private phaseTwoMint;
+    mapping(address => uint256) public phase_one_user_mint;
+    mapping(address => uint256) public phase_two_user_mint;
+    uint256 public phaseOneMint;
+    uint256 public phaseTwoMint;
 
-    uint256 public voyaRequirement = 90_000_000_000_000_000_000; // 90
-    uint256 public BPrice = 1_000_000_000_000_000; // 0.001 BTC
-    uint256 public CPrice = 2_000_000_000_000_000; // 0.002 BTC
+    uint256 public voyaRequirement = 248_000_000_000_000_000_000; // 248
+    uint256 public BPrice = 700_000_000_000_000; // 0.0007 BTC
+    uint256 public CPrice = 850_000_000_000_000; // 0.00085 BTC
 
     mapping(address => bool) public whitelist;
+    mapping(address => bool) public whitelist_onemore;
 
-    IERC721 public token1 = IERC721(address(0x0000000000000000000000000000000000000000));
-    IERC721 public token2 = IERC721(address(0x0000000000000000000000000000000000000000));
-    IERC721 public token3 = IERC721(address(0x0000000000000000000000000000000000000000));
-    IERC20 public voya = IERC20(address(0x0000000000000000000000000000000000000000));
+    IERC20 public voya = IERC20(address(0x480E158395cC5b41e5584347c495584cA2cAf78d));
 
     constructor() ERC721("Nonoku", "NNK") {}
 
@@ -350,10 +348,8 @@ contract Marketplace is ERC721Enumerable, Ownable(msg.sender) {
         uint256 newItemId = _tokenIds++;
         if (block.timestamp >= A && block.timestamp < B) {
             require(
-                token1.balanceOf(msg.sender) > 0 ||
-                    token2.balanceOf(msg.sender) > 0 ||
-                    token3.balanceOf(msg.sender) > 0 ||
-                    voya.balanceOf(msg.sender) >= voyaRequirement,
+                whitelist_onemore[msg.sender] ||
+                voya.balanceOf(msg.sender) >= voyaRequirement,
                 "Condition 1 is not satisfied"
             );
             require(phaseOneMint < phaseOneLimt && phase_one_user_mint[msg.sender] < phaseOneAddressLimit,"quota exceeded");
@@ -382,6 +378,74 @@ contract Marketplace is ERC721Enumerable, Ownable(msg.sender) {
         nftOwners[newItemId] = msg.sender;
     }
 
+    function mintMultipleNFTs(uint count) public payable{
+        require(count > 0,"Count must be greater than 0");
+        require(block.timestamp >= A, "Minting not started");
+        require(totalLimit > totalSupply()+ count - 1,"Mint total has been reached");
+        if (block.timestamp >= A && block.timestamp < B) {
+            require(
+                whitelist_onemore[msg.sender] ||
+                voya.balanceOf(msg.sender) >= voyaRequirement,
+                "Condition 1 is not satisfied"
+            );
+            require(phaseOneMint + count - 1 < phaseOneLimt && phase_one_user_mint[msg.sender] + count - 1 < phaseOneAddressLimit,"quota exceeded");
+            phaseOneMint = phaseOneMint + count;
+            phase_one_user_mint[msg.sender] = phase_one_user_mint[msg.sender] + count;
+        }
+        else if (block.timestamp >= B && block.timestamp < C) {
+            require(
+                whitelist[msg.sender] && msg.value >= BPrice * count,
+                "Condition 2 is not satisfied"
+            );
+            require(phaseTwoMint + count - 1 < phaseTwoLimt && phase_two_user_mint[msg.sender] + count - 1 < phaseTwoAddressLimit,"quota exceeded");
+            phaseTwoMint = phaseTwoMint + count;
+            phase_two_user_mint[msg.sender] = phase_two_user_mint[msg.sender] + count;
+        } 
+        else if (block.timestamp >= C) {
+            require(
+                msg.value >= CPrice * count,
+                "Condition 3 is not satisfied"
+            );
+        }
+
+        for (uint i = 0; i < count; i++) {
+            uint256 newItemId = _tokenIds++;
+            _mint(msg.sender, newItemId);
+            mintedNFTs[msg.sender].push(newItemId);
+            nftOwners[newItemId] = msg.sender;
+        }
+
+        balances[owner()] += msg.value;
+    }
+
+    function canMintNFT() public view returns(bool){
+        if (totalSupply() >= totalLimit){
+            return false;
+        }
+        if (block.timestamp >= A && block.timestamp < B){
+            if ((whitelist_onemore[msg.sender] ||
+                voya.balanceOf(msg.sender) >= voyaRequirement)&&
+                (phaseOneMint < phaseOneLimt && 
+                phase_one_user_mint[msg.sender] < phaseOneAddressLimit)){
+                    return true;
+                }else{
+                    return false;
+                }
+        }else if (block.timestamp >= B && block.timestamp < C){
+            if (whitelist[msg.sender]&&
+                (phaseTwoMint < phaseTwoLimt && 
+                phase_two_user_mint[msg.sender] < phaseTwoAddressLimit)){
+                    return true;
+                }else{
+                    return false;
+                }
+        }else if (block.timestamp >= C){
+            return true;
+        }else {
+            return false;
+        }
+    }
+
     function addToWhitelist(address _address) public onlyOwner {
         whitelist[_address] = true;
     }
@@ -396,17 +460,48 @@ contract Marketplace is ERC721Enumerable, Ownable(msg.sender) {
         whitelist[_address] = false;
     }
 
-    function listNFT(uint256 tokenId, uint256 price) public {
-        require(ownerOf(tokenId) == msg.sender, "Not the owner");
-        require(prices[tokenId] == 0,"Already on list");
-        prices[tokenId] = price;
-        listedNFTs.push(tokenId);
-        listedIndex[tokenId] = listedNFTs.length - 1;
+    function addToWhitelistOneMore(address _address) public onlyOwner {
+        whitelist_onemore[_address] = true;
     }
+
+    function addToWhitelistOneMoreBatch(address[] memory addresses) public onlyOwner {
+        for (uint i = 0; i < addresses.length; i++) {
+            whitelist_onemore[addresses[i]] = true;
+        }
+    }
+
+    function removeFromWhitelistOneMore(address _address) public onlyOwner {
+        whitelist_onemore[_address] = false;
+    }
+
+    // ================================================
+
+    // function listNFT(uint256 tokenId, uint256 price) public {
+    //     require(ownerOf(tokenId) == msg.sender, "Not the owner");
+    //     require(prices[tokenId] == 0,"Already on list");
+    //     prices[tokenId] = price;
+    //     listedNFTs.push(tokenId);
+    //     listedIndex[tokenId] = listedNFTs.length - 1;
+    // }
+
+    function listMultipleNFTs(uint256[] memory tokenIds, uint256[] memory pricesArray) public {
+        require(tokenIds.length == pricesArray.length, "Arrays must be of equal length");
+
+        for (uint i = 0; i < tokenIds.length; i++) {
+            uint256 tokenId = tokenIds[i];
+            uint256 price = pricesArray[i];
+            require(ownerOf(tokenId) == msg.sender, "Not the owner");
+            require(prices[tokenId] == 0, "Already on list");
+            prices[tokenId] = price;
+            listedNFTs.push(tokenId);
+            listedIndex[tokenId] = listedNFTs.length - 1;
+        }
+    }
+
 
     function adjustNftPrice(uint256 tokenId, uint256 price) public {
         require(ownerOf(tokenId) == msg.sender, "Not the owner");
-        require(prices[tokenId]>0,"Not on list");
+        require(prices[tokenId] > 0,"Not on list");
         prices[tokenId] = price;
     }
 
