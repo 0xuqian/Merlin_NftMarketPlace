@@ -36,7 +36,5 @@ interface IMarketplace {
 
     function buyNFT(uint256 tokenId) external payable;
 
-    function withdrawBalance() external;
-
     function addToSuperWhitelistBatch(address[] memory addresses) external;
 }
