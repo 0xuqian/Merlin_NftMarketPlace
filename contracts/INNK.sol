@@ -14,13 +14,23 @@ interface IMarketplace {
 
     function mintNFT() external payable;
 
+    function mintMultipleNFTs(uint256 count) external payable;
+    
+    function canMintNFT() external view returns(bool);
+
     function addToWhitelist(address _address) external;
 
     function addToWhitelistBatch(address[] memory addresses) external;
 
     function removeFromWhitelist(address _address) external;
 
-    function listNFT(uint256 tokenId, uint256 price) external;
+    function addToWhitelistOneMore(address _address) external;
+
+    function addToWhitelistOneMoreBatch(address[] memory addresses) external;
+
+    function removeFromWhitelistOneMore(address _address) external;
+    
+    function listMultipleNFTs(uint256[] calldata tokenIds, uint256[] calldata pricesArray) external;
 
     function unlistNFT(uint256 tokenId) external;
 
