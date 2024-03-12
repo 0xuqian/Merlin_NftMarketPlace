@@ -378,7 +378,7 @@ contract NNK is ERC721Enumerable, Ownable(msg.sender) {
         nftOwners[newItemId] = msg.sender;
     }
 
-    function mintMultipleNFTs(uint count) public payable{
+    function mintMultipleNFTs(uint256 count) public payable{
         require(count > 0,"Count must be greater than 0");
         require(block.timestamp >= A, "Minting not started");
         require(totalLimit > totalSupply()+ count - 1,"Mint total has been reached");
@@ -497,7 +497,6 @@ contract NNK is ERC721Enumerable, Ownable(msg.sender) {
             listedIndex[tokenId] = listedNFTs.length - 1;
         }
     }
-
 
     function adjustNftPrice(uint256 tokenId, uint256 price) public {
         require(ownerOf(tokenId) == msg.sender, "Not the owner");
