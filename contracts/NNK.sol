@@ -276,7 +276,7 @@ contract NNK is ERC721Enumerable, Ownable(msg.sender) {
     string public baseURI = "https://nonoku.io/images/";
 
     uint256 public constant feePercentage = 3; 
-    mapping(address => uint256) public balances; 
+    // mapping(address => uint256) public balances; 
     mapping(uint256 => uint256) public prices; 
     mapping(uint256 => address) public nftOwners;
     mapping(address => uint256[]) private mintedNFTs; 
@@ -292,8 +292,10 @@ contract NNK is ERC721Enumerable, Ownable(msg.sender) {
     uint256 private  totalLimit = 10000;
     uint256 private  phaseOneAddressLimit = 2;
     uint256 private  phaseTwoAddressLimit = 3;
+    uint256 private  phaseThrAddressLimit = 3;
     mapping(address => uint256) public phase_one_user_mint;
     mapping(address => uint256) public phase_two_user_mint;
+    mapping(address => uint256) public phase_thr_user_mint;
     uint256 public phaseOneMint;
     uint256 public phaseTwoMint;
 
@@ -370,10 +372,12 @@ contract NNK is ERC721Enumerable, Ownable(msg.sender) {
                 msg.value >= CPrice,
                 "Condition 3 is not satisfied"
             );
+            require(phase_thr_user_mint[msg.sender] < phaseThrAddressLimit,"quota exceeded");
+            phase_thr_user_mint[msg.sender] = phase_thr_user_mint[msg.sender] + 1;
         }
 
         _mint(msg.sender, newItemId);
-        balances[owner()] += msg.value;
+        payable(owner()).transfer(msg.value);
         mintedNFTs[msg.sender].push(newItemId);
         nftOwners[newItemId] = msg.sender;
     }
@@ -415,7 +419,7 @@ contract NNK is ERC721Enumerable, Ownable(msg.sender) {
             nftOwners[newItemId] = msg.sender;
         }
 
-        balances[owner()] += msg.value;
+        payable(owner()).transfer(msg.value);
     }
 
     function canMintNFT() public view returns(bool){
@@ -454,7 +458,7 @@ contract NNK is ERC721Enumerable, Ownable(msg.sender) {
         for (uint i = 0; i < addresses.length; i++) {
             whitelist[addresses[i]] = true;
         }
-    }
+    } 
 
     function removeFromWhitelist(address _address) public onlyOwner {
         whitelist[_address] = false;
@@ -524,7 +528,7 @@ contract NNK is ERC721Enumerable, Ownable(msg.sender) {
         require(msg.value >= price, "Insufficient ETH sent");
         require(nftOwners[tokenId] != address(0), "NFT not minted");
 
-        balances[nftOwners[tokenId]] += msg.value;
+        payable(nftOwners[tokenId]).transfer(msg.value);
         _transfer(nftOwners[tokenId], msg.sender, tokenId);
         nftOwners[tokenId] = msg.sender;
         prices[tokenId] = 0;
@@ -539,16 +543,5 @@ contract NNK is ERC721Enumerable, Ownable(msg.sender) {
         listedNFTs.pop();
         delete listedIndex[tokenId]; 
     }
-
-    function withdrawBalance() public {
-        uint256 balance = balances[msg.sender];
-        require(balance > 0, "No balance to withdraw");
-
-        uint256 fee = (balance * feePercentage) / 100;
-        uint256 amountAfterFee = balance - fee;
-        balances[msg.sender] = 0;
-        payable(msg.sender).transfer(amountAfterFee);
-        payable(owner()).transfer(balance-amountAfterFee);
-    }
-
 }
+
