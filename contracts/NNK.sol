@@ -422,31 +422,34 @@ contract NNK is ERC721Enumerable, Ownable(msg.sender) {
         payable(owner()).transfer(msg.value);
     }
 
-    function canMintNFT() public view returns(bool){
+    function canMintNFT() public view returns(uint256){
         if (totalSupply() >= totalLimit){
-            return false;
+            return 0;
         }
         if (block.timestamp >= A && block.timestamp < B){
             if ((whitelist_onemore[msg.sender] ||
                 voya.balanceOf(msg.sender) >= voyaRequirement)&&
                 (phaseOneMint < phaseOneLimt && 
                 phase_one_user_mint[msg.sender] < phaseOneAddressLimit)){
-                    return true;
+                    return (phaseOneLimt + phaseOneAddressLimit) > (phase_one_user_mint[msg.sender] + phaseOneMint) ?
+                     (phaseOneAddressLimit - phase_one_user_mint[msg.sender]):(phaseOneLimt - phaseOneMint);
                 }else{
-                    return false;
+                    return 0;
                 }
         }else if (block.timestamp >= B && block.timestamp < C){
             if (whitelist[msg.sender]&&
                 (phaseTwoMint < phaseTwoLimt && 
                 phase_two_user_mint[msg.sender] < phaseTwoAddressLimit)){
-                    return true;
+                    return (phaseTwoLimt + phaseTwoAddressLimit) > (phase_two_user_mint[msg.sender] + phaseTwoMint) ?
+                     (phaseTwoAddressLimit - phase_two_user_mint[msg.sender]):(phaseTwoLimt - phaseTwoMint);
                 }else{
-                    return false;
+                    return 0;
                 }
         }else if (block.timestamp >= C){
-            return true;
+            return (totalLimit + phaseThrAddressLimit) > (phase_thr_user_mint[msg.sender] + totalSupply()) ?
+                     (phaseOneAddressLimit - phase_one_user_mint[msg.sender]):(totalLimit - totalSupply());
         }else {
-            return false;
+            return 0;
         }
     }
 
