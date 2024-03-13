@@ -16,7 +16,7 @@ interface IMarketplace {
 
     function mintMultipleNFTs(uint256 count) external payable;
     
-    function canMintNFT() external view returns(bool);
+    function canMintNFT() external view returns(uint256);
 
     function addToWhitelist(address _address) external;
 
